@@ -3,7 +3,6 @@
 # Created for TagStudio: https://github.com/CyanVoxel/TagStudio
 
 
-import ctypes
 import logging
 import math
 import os
@@ -11,6 +10,7 @@ from pathlib import Path
 
 import cv2
 import rawpy
+from pillow_heif import register_heif_opener, register_avif_opener
 from PIL import (
     Image,
     ImageChops,
@@ -28,12 +28,14 @@ from src.core.ts_core import PLAINTEXT_TYPES, VIDEO_TYPES, IMAGE_TYPES, RAW_IMAG
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
-ERROR = f"[ERROR]"
-WARNING = f"[WARNING]"
-INFO = f"[INFO]"
+ERROR = "[ERROR]"
+WARNING = "[WARNING]"
+INFO = "[INFO]"
 
 
 logging.basicConfig(format="%(message)s", level=logging.INFO)
+register_heif_opener()
+register_avif_opener()
 
 
 class ThumbRenderer(QObject):
@@ -187,7 +189,7 @@ class ThumbRenderer(QObject):
                         image = bg
                     except:
                         logging.info(
-                            f"[ThumbRenderer][ERROR]: Coulnd't render thumbnail for {filepath}"
+                            f"[ThumbRenderer][ERROR]: Couldn't render thumbnail for {filepath}"
                         )
                 # No Rendered Thumbnail ========================================
                 else:
@@ -381,7 +383,7 @@ class ThumbRenderer(QObject):
                         image = bg
                     except:
                         logging.info(
-                            f"[ThumbRenderer][ERROR]: Coulnd't render thumbnail for {filepath}"
+                            f"[ThumbRenderer][ERROR]: Couldn't render thumbnail for {filepath}"
                         )
                 # 3D ===========================================================
                 # elif extension == 'stl':
