@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 
 import cv2
+import rawpy
 from PIL import (
     Image,
     ImageChops,
@@ -23,7 +24,7 @@ from PIL import (
 )
 from PySide6.QtCore import QObject, Signal, QSize
 from PySide6.QtGui import QPixmap
-from src.core.ts_core import PLAINTEXT_TYPES, VIDEO_TYPES, IMAGE_TYPES
+from src.core.ts_core import PLAINTEXT_TYPES, VIDEO_TYPES, IMAGE_TYPES, RAW_IMAGE_TYPES
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
@@ -150,6 +151,13 @@ class ThumbRenderer(QObject):
 
                     image = ImageOps.exif_transpose(image)
 
+                elif extension in RAW_IMAGE_TYPES:
+                    with rawpy.imread(filepath) as raw:
+                        rgb = raw.postprocess()
+                        image = Image.frombytes(
+                            "RGB", (rgb.shape[1], rgb.shape[0]), rgb, decoder_name="raw"
+                        )
+
                 # Videos =======================================================
                 elif extension in VIDEO_TYPES:
                     video = cv2.VideoCapture(filepath)
@@ -253,7 +261,12 @@ class ThumbRenderer(QObject):
                 # hl_add.putalpha(ImageEnhance.Brightness(hl.getchannel(3)).enhance(.25))
                 # final.paste(hl_add, mask=hl_add.getchannel(3))
 
-            except (UnidentifiedImageError, FileNotFoundError, cv2.error):
+            except (
+                UnidentifiedImageError,
+                FileNotFoundError,
+                cv2.error,
+                rawpy._rawpy.LibRawIOError,
+            ):
                 broken_thumb = True
                 final = ThumbRenderer.thumb_broken_512.resize(
                     (adj_size, adj_size), resample=Image.Resampling.BILINEAR
@@ -333,6 +346,13 @@ class ThumbRenderer(QObject):
 
                     image = ImageOps.exif_transpose(image)
 
+                elif extension in RAW_IMAGE_TYPES:
+                    with rawpy.imread(filepath) as raw:
+                        rgb = raw.postprocess()
+                        image = Image.frombytes(
+                            "RGB", (rgb.shape[1], rgb.shape[0]), rgb, decoder_name="raw"
+                        )
+
                 # Videos =======================================================
                 elif extension in VIDEO_TYPES:
                     video = cv2.VideoCapture(filepath)
@@ -363,6 +383,25 @@ class ThumbRenderer(QObject):
                         logging.info(
                             f"[ThumbRenderer][ERROR]: Coulnd't render thumbnail for {filepath}"
                         )
+                # 3D ===========================================================
+                # elif extension == 'stl':
+                # 	# Create a new plot
+                # 	matplotlib.use('agg')
+                # 	figure = plt.figure()
+                # 	axes = figure.add_subplot(projection='3d')
+
+                # 	# Load the STL files and add the vectors to the plot
+                # 	your_mesh = mesh.Mesh.from_file(filepath)
+
+                # 	poly_collection = mplot3d.art3d.Poly3DCollection(your_mesh.vectors)
+                # 	poly_collection.set_color((0,0,1))  # play with color
+                # 	scale = your_mesh.points.flatten()
+                # 	axes.auto_scale_xyz(scale, scale, scale)
+                # 	axes.add_collection3d(poly_collection)
+                # 	# plt.show()
+                # 	img_buf = io.BytesIO()
+                # 	plt.savefig(img_buf, format='png')
+                # 	image = Image.open(img_buf)
                 # No Rendered Thumbnail ========================================
                 else:
                     image = ThumbRenderer.thumb_file_default_512.resize(
@@ -459,7 +498,12 @@ class ThumbRenderer(QObject):
                 # logging.info(image.size)
                 final.paste(image, mask=rec.getchannel(0))
 
-            except (UnidentifiedImageError, FileNotFoundError, cv2.error):
+            except (
+                UnidentifiedImageError,
+                FileNotFoundError,
+                cv2.error,
+                rawpy._rawpy.LibRawIOError,
+            ):
                 broken_thumb = True
                 self.updated_ratio.emit(1)
                 final = ThumbRenderer.thumb_broken_512.resize(

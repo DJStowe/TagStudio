@@ -40,6 +40,7 @@ IMAGE_TYPES: list[str] = [
     "j2k",
     "jpg2",
 ]
+RAW_IMAGE_TYPES: list[str] = ["raw", "dng", "rw2", "nef", "arw"]
 VIDEO_TYPES: list[str] = [
     "mp4",
     "webm",
